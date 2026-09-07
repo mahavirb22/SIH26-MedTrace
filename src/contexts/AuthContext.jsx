@@ -34,6 +34,21 @@ export function AuthProvider({ children }) {
   }, []);
 
   /**
+   * Helper to safely parse fetch response.
+   */
+  const parseResponse = async (res) => {
+    const contentType = res.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      return await res.json();
+    }
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`Server Error (${res.status}): ${text || 'Backend server is not responding correctly.'}`);
+    }
+    return { message: text };
+  };
+
+  /**
    * Login with email + password.
    * @returns {{ user, accessToken }} on success
    * @throws {Error} on failure
@@ -41,12 +56,18 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
+      let res;
+      try {
+        res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+      } catch (netErr) {
+        throw new Error('Network error: Cannot reach MedTrace API server. Make sure the backend server is running on port 3001.');
+      }
+
+      const data = await parseResponse(res);
       if (!res.ok) throw new Error(data.error || 'Login failed');
 
       saveAuth(data.user, data.accessToken, data.refreshToken);
@@ -62,12 +83,18 @@ export function AuthProvider({ children }) {
   const register = useCallback(async ({ email, password, name, role, phone, storeId }) => {
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, name, role, phone, storeId }),
-      });
-      const data = await res.json();
+      let res;
+      try {
+        res = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, name, role, phone, storeId }),
+        });
+      } catch (netErr) {
+        throw new Error('Network error: Cannot reach MedTrace API server. Make sure the backend server is running on port 3001.');
+      }
+
+      const data = await parseResponse(res);
       if (!res.ok) throw new Error(data.error || 'Registration failed');
 
       saveAuth(data.user, data.accessToken, data.refreshToken);
@@ -98,28 +125,37 @@ export function AuthProvider({ children }) {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    let res = await fetch(url, { ...options, headers });
+    let res;
+    try {
+      res = await fetch(url, { ...options, headers });
+    } catch (err) {
+      throw new Error(`Network error accessing ${url}.`);
+    }
 
     // If 401, try refreshing the token
     if (res.status === 401 && token) {
       const refreshToken = localStorage.getItem(REFRESH_KEY);
       if (refreshToken) {
-        const refreshRes = await fetch('/api/auth/refresh', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refreshToken }),
-        });
+        try {
+          const refreshRes = await fetch('/api/auth/refresh', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+          });
 
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
-          localStorage.setItem(TOKEN_KEY, refreshData.accessToken);
-          localStorage.setItem(REFRESH_KEY, refreshData.refreshToken);
+          if (refreshRes.ok) {
+            const refreshData = await refreshRes.json();
+            localStorage.setItem(TOKEN_KEY, refreshData.accessToken);
+            localStorage.setItem(REFRESH_KEY, refreshData.refreshToken);
 
-          // Retry the original request with new token
-          headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
-          res = await fetch(url, { ...options, headers });
-        } else {
-          // Refresh failed — force logout
+            // Retry the original request with new token
+            headers['Authorization'] = `Bearer ${refreshData.accessToken}`;
+            res = await fetch(url, { ...options, headers });
+          } else {
+            // Refresh failed — force logout
+            clearAuth();
+          }
+        } catch {
           clearAuth();
         }
       }

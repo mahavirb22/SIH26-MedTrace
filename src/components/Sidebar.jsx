@@ -1,76 +1,91 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import logoImg from '../assets/f36fe9f878904277a25160df72df9f1a_verimed_logo.png';
 
 /**
- * Reusable Sidebar navigation component for Pharmacist Portal and Admin Dashboard.
- * 
+ * Dedicated Sidebar component for Pharmacist and Admin portals.
+ * Completely separate views with zero overlapping tabs or portal switches.
+ *
  * @param {Object} props
- * @param {'pharmacist' | 'admin'} [props.portal='pharmacist']
+ * @param {'pharmacist' | 'admin'} [props.portal]
  */
-export default function Sidebar({ portal = 'pharmacist' }) {
+export default function Sidebar({ portal }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  // Determine active portal mode strictly from props, URL path, or user role
+  const isAdminPortal =
+    portal === 'admin' ||
+    location.pathname.startsWith('/admin') ||
+    (user?.role === 'admin' && !location.pathname.startsWith('/pharmacist'));
 
   const pharmacistLinks = [
-    { label: 'Dashboard', path: '/pharmacist/dashboard', icon: 'dashboard' },
-    { label: 'Sell / POS', path: '/pharmacist/sell', icon: 'point_of_sale' },
+    { label: 'POS Dashboard', path: '/pharmacist/dashboard', icon: 'dashboard' },
+    { label: 'Dispense POS', path: '/pharmacist/sell', icon: 'point_of_sale' },
     { label: 'Inventory', path: '/pharmacist/inventory', icon: 'inventory_2' },
     { label: 'Store Analytics', path: '/pharmacist/analytics', icon: 'analytics' },
   ];
 
   const adminLinks = [
-    { label: 'Regulator Overview', path: '/admin/overview', icon: 'shield_person' },
-    { label: 'Store Analytics', path: '/admin/analytics', icon: 'insights' },
+    { label: 'Regulator Dashboard', path: '/admin/dashboard', icon: 'shield_person' },
+    { label: 'Store Analytics', path: '/admin/stores', icon: 'insights' },
     { label: 'Anomaly Alerts', path: '/admin/alerts', icon: 'warning' },
     { label: 'Audit Trail', path: '/admin/audit', icon: 'receipt_long' },
   ];
 
-  const links = portal === 'pharmacist' ? pharmacistLinks : adminLinks;
-  const portalTitle = portal === 'pharmacist' ? 'Pharmacist Portal' : 'Regulator Admin';
+  const links = isAdminPortal ? adminLinks : pharmacistLinks;
+  const portalTitle = isAdminPortal ? 'Regulator Admin' : 'Pharmacist Portal';
+  const portalSub = isAdminPortal ? 'NATIONAL INTEGRITY' : 'DISPENSARY SYSTEM';
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) =>
+    location.pathname === path || (path !== '/admin/dashboard' && path !== '/pharmacist/dashboard' && location.pathname.startsWith(path));
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  // Derive user display info
+  const userName = user?.name || (isAdminPortal ? 'Inspector Director' : 'Pharmacist Doctor');
+  const userSub = user?.email || (isAdminPortal ? 'admin@medtrace.in' : 'pharmacist@medicare.com');
+  const userInitials = userName
+    ? userName
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .substring(0, 2)
+        .toUpperCase()
+    : isAdminPortal
+    ? 'AD'
+    : 'RX';
 
   return (
-    <aside className="w-64 bg-surface-container-lowest border-r border-outline-variant/30 min-h-screen flex flex-col justify-between p-6 shrink-0">
+    <aside className="w-64 bg-surface-container-lowest border-r border-outline-variant/30 min-h-screen flex flex-col justify-between p-6 shrink-0 shadow-sm font-body">
       <div className="flex flex-col gap-8">
         {/* Brand Header */}
         <div className="flex items-center gap-3">
-          <img src={logoImg} alt="MedTrace Logo" className="h-8 w-auto object-contain" />
+          <img src={logoImg} alt="MedTrace Logo" className="h-9 w-auto object-contain" />
           <div className="flex flex-col">
             <span className="font-headline text-xl font-bold text-primary leading-none">
               MedTrace
             </span>
-            <span className="font-label-caps text-[10px] text-outline tracking-wider uppercase mt-1 font-bold">
+            <span className="font-label-caps text-[9px] text-outline tracking-widest uppercase mt-1 font-bold">
               {portalTitle}
             </span>
           </div>
         </div>
 
-        {/* Portal Switcher Badge */}
-        <div className="flex bg-surface-container rounded-lg p-1 text-xs">
-          <Link
-            to="/pharmacist/dashboard"
-            className={`flex-1 text-center py-1.5 rounded-md font-semibold transition-all ${
-              portal === 'pharmacist'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Pharmacist
-          </Link>
-          <Link
-            to="/admin/overview"
-            className={`flex-1 text-center py-1.5 rounded-md font-semibold transition-all ${
-              portal === 'admin'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            Admin
-          </Link>
+        {/* Dedicated Portal Badge (No tab switcher) */}
+        <div className="px-3 py-2 rounded-xl bg-surface-container-low border border-outline-variant/30 flex items-center justify-between">
+          <span className="text-[11px] font-label-caps font-bold text-primary uppercase tracking-wider">
+            {portalSub}
+          </span>
+          <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
         </div>
 
-        {/* Navigation Items */}
+        {/* Portal-Specific Navigation Items */}
         <nav className="flex flex-col gap-1.5">
           {links.map((item) => {
             const active = isActive(item.path);
@@ -80,7 +95,7 @@ export default function Sidebar({ portal = 'pharmacist' }) {
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                   active
-                    ? 'bg-secondary-container text-on-secondary-container font-bold shadow-sm'
+                    ? 'bg-primary text-on-primary font-bold shadow-sm'
                     : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
                 }`}
               >
@@ -94,28 +109,35 @@ export default function Sidebar({ portal = 'pharmacist' }) {
         </nav>
       </div>
 
-      {/* Footer Profile & Patient App Switcher */}
+      {/* Footer Profile & Logout */}
       <div className="flex flex-col gap-4 pt-6 border-t border-outline-variant/20">
         <Link
-          to="/patient"
+          to="/"
           className="flex items-center justify-center gap-2 text-xs font-label-caps uppercase tracking-wider text-outline hover:text-primary py-2 rounded-lg border border-outline/20 transition-all hover:bg-surface-container-low"
         >
           <span className="material-symbols-outlined text-[16px]">arrow_back</span>
-          <span>Patient App</span>
+          <span>Back to Patient App</span>
         </Link>
 
         <div className="flex items-center gap-3 bg-surface-container rounded-xl p-3">
-          <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-sm shrink-0">
-            {portal === 'pharmacist' ? 'RX' : 'AD'}
+          <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-bold text-xs shrink-0">
+            {userInitials}
           </div>
-          <div className="flex flex-col min-w-0">
+          <div className="flex flex-col min-w-0 flex-1">
             <span className="text-xs font-bold text-on-surface truncate">
-              {portal === 'pharmacist' ? 'Dr. Sarah Jenkins' : 'Inspector Director'}
+              {userName}
             </span>
             <span className="text-[11px] text-outline truncate font-mono">
-              {portal === 'pharmacist' ? 'Lic #RX-884920' : 'FDA Reg #88392'}
+              {userSub}
             </span>
           </div>
+          <button
+            onClick={handleLogout}
+            className="w-8 h-8 rounded-full bg-error/10 text-error flex items-center justify-center hover:bg-error/20 transition-colors shrink-0"
+            title="Sign Out"
+          >
+            <span className="material-symbols-outlined text-[16px]">logout</span>
+          </button>
         </div>
       </div>
     </aside>

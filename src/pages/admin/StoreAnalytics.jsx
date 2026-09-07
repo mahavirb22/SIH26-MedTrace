@@ -35,7 +35,7 @@ export default function StoreAnalytics() {
 
   return (
     <div className="bg-surface font-body text-on-surface min-h-screen flex">
-      <Sidebar portal={isAdmin ? 'admin' : 'pharmacist'} />
+      <Sidebar portal="admin" />
 
       <main className="flex-1 p-8 overflow-y-auto max-w-7xl mx-auto flex flex-col gap-8">
         <div className="border-b border-outline-variant/20 pb-6">

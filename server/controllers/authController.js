@@ -20,6 +20,7 @@ function generateTokens(user) {
 
 /**
  * POST /api/auth/register
+ * Dynamic registration for Patient, Pharmacist, Admin, Manufacturer.
  */
 export async function register(req, res, next) {
   try {
@@ -29,18 +30,32 @@ export async function register(req, res, next) {
       return res.status(400).json({ error: 'Email, password, and name are required.' });
     }
 
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser) {
+      return res.status(409).json({ error: 'An account with this email address already exists. Please log in.' });
+    }
+
     const validRoles = ['patient', 'pharmacist', 'manufacturer', 'admin'];
     const userRole = validRoles.includes(role) ? role : 'patient';
 
-    // For pharmacist, validate storeId exists
+    // For pharmacist, associate or dynamically create store
     let storeRef = null;
     if (userRole === 'pharmacist') {
-      if (!storeId) {
-        return res.status(400).json({ error: 'Store license ID is required for pharmacist registration.' });
-      }
-      const store = await Store.findOne({ licenseId: storeId.toUpperCase() });
+      const licenseCode = (storeId || `PHARM-${Math.floor(1000 + Math.random() * 9000)}`).toUpperCase();
+      let store = await Store.findOne({ licenseId: licenseCode });
       if (!store) {
-        return res.status(404).json({ error: `Store with license ID ${storeId} not found.` });
+        // Dynamically create store if license ID doesn't exist yet
+        store = await Store.create({
+          licenseId: licenseCode,
+          name: `${name.trim()}'s Pharmacy`,
+          region: 'Central Region',
+          address: 'Registered Dispensary Location',
+          isActive: true,
+          complianceScore: 100.0,
+        });
       }
       storeRef = store._id;
     }
@@ -48,7 +63,7 @@ export async function register(req, res, next) {
     const passwordHash = await bcrypt.hash(password, 12);
 
     const user = await User.create({
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       passwordHash,
       name: name.trim(),
       role: userRole,
@@ -71,6 +86,7 @@ export async function register(req, res, next) {
 
 /**
  * POST /api/auth/login
+ * Dynamic login checking email + hashed password in database.
  */
 export async function login(req, res, next) {
   try {
@@ -82,12 +98,12 @@ export async function login(req, res, next) {
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid email or password. Please check your credentials.' });
     }
 
     const isMatch = await bcrypt.compare(password, user.passwordHash);
     if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password.' });
+      return res.status(401).json({ error: 'Invalid email or password. Please check your credentials.' });
     }
 
     const tokens = generateTokens(user);

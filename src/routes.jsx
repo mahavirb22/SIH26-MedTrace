@@ -14,8 +14,10 @@ import PharmacistLogin from './pages/pharmacist/PharmacistLogin';
 import Dashboard from './pages/pharmacist/Dashboard';
 import SellPOS from './pages/pharmacist/SellPOS';
 import InventoryManagement from './pages/pharmacist/InventoryManagement';
+import PharmacistAnalytics from './pages/pharmacist/PharmacistAnalytics';
 
 // Admin / Regulator Pages
+import AdminLogin from './pages/admin/AdminLogin';
 import RegulatorOverview from './pages/admin/RegulatorOverview';
 import StoreAnalytics from './pages/admin/StoreAnalytics';
 import AnomalyAlerts from './pages/admin/AnomalyAlerts';
@@ -57,34 +59,40 @@ export default function AppRoutes() {
       } />
       <Route path="/pharmacist/analytics" element={
         <ProtectedRoute roles={['pharmacist', 'admin']} redirectTo="/pharmacist/login">
-          <StoreAnalytics />
+          <PharmacistAnalytics />
         </ProtectedRoute>
       } />
 
       {/* Admin / Regulator Portal Routes — protected */}
-      <Route path="/admin" element={<Navigate to="/admin/overview" replace />} />
+      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin/dashboard" element={
+        <ProtectedRoute roles={['admin']} redirectTo="/admin/login">
+          <RegulatorOverview />
+        </ProtectedRoute>
+      } />
       <Route path="/admin/overview" element={
-        <ProtectedRoute roles={['admin']} redirectTo="/pharmacist/login">
+        <ProtectedRoute roles={['admin']} redirectTo="/admin/login">
           <RegulatorOverview />
         </ProtectedRoute>
       } />
       <Route path="/admin/stores" element={
-        <ProtectedRoute roles={['admin']} redirectTo="/pharmacist/login">
+        <ProtectedRoute roles={['admin']} redirectTo="/admin/login">
           <StoreAnalytics />
         </ProtectedRoute>
       } />
       <Route path="/admin/alerts" element={
-        <ProtectedRoute roles={['admin']} redirectTo="/pharmacist/login">
+        <ProtectedRoute roles={['admin']} redirectTo="/admin/login">
           <AnomalyAlerts />
         </ProtectedRoute>
       } />
       <Route path="/admin/audit" element={
-        <ProtectedRoute roles={['admin']} redirectTo="/pharmacist/login">
+        <ProtectedRoute roles={['admin']} redirectTo="/admin/login">
           <AuditTrail />
         </ProtectedRoute>
       } />
       <Route path="/admin/audit/:batchId" element={
-        <ProtectedRoute roles={['admin']} redirectTo="/pharmacist/login">
+        <ProtectedRoute roles={['admin']} redirectTo="/admin/login">
           <AuditTrail />
         </ProtectedRoute>
       } />
