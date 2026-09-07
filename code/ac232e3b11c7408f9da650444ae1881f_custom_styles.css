@@ -1,0 +1,33 @@
+@keyframes stamp-in {
+  0% {
+    transform: scale(3);
+    opacity: 0;
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-stamp {
+  animation: stamp-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Blister strip motif */
+.blister-motif {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  padding: 16px 0;
+}
+
+.blister-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--muted-sage);
+  opacity: 0.2;
+}

@@ -1,0 +1,132 @@
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"on-primary":"#ffffff","on-error-container":"#93000a","on-error":"#ffffff","on-secondary-container":"#556d00","on-tertiary-container":"#92a29a","surface-tint":"#406659","on-tertiary":"#ffffff","tertiary-fixed":"#d6e6dd","inverse-on-surface":"#f2f1ed","outline":"#717975","on-primary-fixed":"#002118","on-primary-container":"#80a798","on-secondary-fixed":"#161f00","tertiary-container":"#2a3933","secondary-fixed-dim":"#add52b","surface":"#faf9f5","primary-fixed":"#c2ebdb","surface-bright":"#faf9f5","on-primary-fixed-variant":"#284e42","background":"#faf9f5","primary":"#00261c","surface-container-highest":"#e3e2df","surface-container-low":"#f4f4f0","on-secondary":"#ffffff","tertiary":"#15231e","on-tertiary-fixed-variant":"#3b4a43","on-background":"#1b1c1a","on-tertiary-fixed":"#101e19","on-surface-variant":"#414845","surface-container-high":"#e9e8e4","secondary-fixed":"#c8f248","surface-container":"#efeeea","inverse-primary":"#a7cfc0","primary-container":"#163c31","surface-dim":"#dbdad6","secondary":"#506600","tertiary-fixed-dim":"#bacac1","outline-variant":"#c1c8c4","error":"#ba1a1a","primary-fixed-dim":"#a7cfc0","secondary-container":"#c8f248","surface-container-lowest":"#ffffff","on-surface":"#1b1c1a","inverse-surface":"#2f312e","on-secondary-fixed-variant":"#3c4d00","error-container":"#ffdad6","surface-variant":"#e3e2df"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"max-width":"1200px","margin-mobile":"16px","margin-desktop":"64px","gutter":"24px","base":"8px"},"fontFamily":{"body-md":["Hanken Grotesk"],"label-caps":["Hanken Grotesk"],"headline-xl":["Syne"],"headline-lg":["Syne"],"body-sm":["Hanken Grotesk"],"code-md":["JetBrains Mono"],"headline-lg-mobile":["Syne"]},"fontSize":{"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}],"label-caps":["12px",{"lineHeight":"16px","letterSpacing":"0.08em","fontWeight":"700"}],"headline-xl":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"code-md":["14px",{"lineHeight":"20px","letterSpacing":"0.05em","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"600"}]}}}}</script><link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;700&amp;family=Syne:wght@600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-background min-h-screen flex flex-col"><header class="fixed top-0 w-full z-50 bg-surface/80 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-b border-outline-variant/10"><div class="h-20 max-w-[1200px] mx-auto px-margin-mobile lg:px-margin-desktop flex items-center justify-between"><div class="flex items-center gap-4"><img alt="VeriMed Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7jU9vNuhuKSelWe65Jwz95Wseevq9CuP0_DigvHHgQXugosyy9rBuSdgLnHWBlAGRBgWLKnwI95NbvXZ8GQMQwLdhIkf5LiP648za5Ors1_9DNI1KM7loXklbj2ernUcnv4KZLyowiW58_PCsj7VrtR1tVLTzPJI01zaFA78vbCh9qyD8qnO6cWlp6RNDdbsBEZwKsTh2pU1_7XYfD-TSilbLSaGGBy8VaO2P7nMF7GPl3d9MP9rR"/><span class="font-headline-lg text-headline-lg text-primary tracking-tight">VeriMed</span></div><nav class="hidden md:flex items-center gap-gutter" data-active-classes="text-primary font-bold"><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="how-it-works" href="#">How it Works</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="for-pharmacies" href="#">For Pharmacies</a></nav><div class="flex items-center gap-6"><a class="hidden sm:flex items-center justify-center bg-secondary-container text-on-secondary-container font-label-caps text-label-caps px-6 py-3 rounded-full hover:bg-secondary hover:text-on-secondary transition-all shadow-sm" data-path="scan-medicine" href="#">SCAN A MEDICINE</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 flex-grow"><div class="flex flex-col w-full">
+<!-- Hero Section -->
+<section class="w-full relative px-margin-mobile lg:px-margin-desktop py-12 lg:py-24 max-w-[1200px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-16">
+<!-- Hero Left: Content -->
+<div class="flex flex-col w-full lg:w-1/2 z-10">
+<h1 class="font-headline-xl text-headline-xl text-primary mb-6">
+        Medicine you can trust, verified in seconds.
+      </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mb-10 max-w-lg">
+        Scan any medicine strip to confirm authenticity, verify its source, and access instant dosage information from medical experts.
+      </p>
+<!-- CTAs -->
+<div class="flex flex-col sm:flex-row items-center gap-4 mb-12">
+<a class="w-full sm:w-auto flex items-center justify-center bg-primary-container text-on-primary font-label-caps text-label-caps px-8 py-4 rounded-full shadow-md hover:bg-primary transition-all duration-300" href="#">
+          SCAN A MEDICINE
+        </a>
+<a class="w-full sm:w-auto flex items-center justify-center bg-surface-container-highest text-on-surface font-label-caps text-label-caps px-8 py-4 rounded-full hover:bg-surface-dim transition-all duration-300" href="#how-it-works">
+          SEE HOW IT WORKS
+        </a>
+</div>
+<!-- Trust Row -->
+<div class="flex items-center gap-4 bg-surface-container rounded-full py-2 px-4 w-max shadow-sm">
+<div class="flex items-center gap-1">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<span class="font-body-sm text-body-sm text-on-surface-variant">
+<strong class="text-on-surface font-bold">12,400+</strong> medicines verified
+        </span>
+</div>
+</div>
+<!-- Hero Right: Image & Overlay -->
+<div class="w-full lg:w-1/2 relative">
+<div class="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-xl bg-surface-container-high group">
+<img alt="Pharmacist in clean medical environment" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBEokfjCPmmD6Se8Qe7fpt_GSJZHzL-TKie6byOgPHOIidFhfaPZsDpPs3_xci1ITUqe2NtgbaD8bY5WrK5LnyPHofhGv5Nc08lv1SkIIayZmywYDGuwpV1kpZrWpbHxs2eVMxk7Imc-qWdDpWgAOdhQ6CGGCiNFOxJMpdyKk3T72dOQTLssJVl9PimdPV0E6F9RpD5tqCgv_68ui2zkyo4tvZa-9CJQiRnTEIEJpPIi1wE-uEx-11K"/>
+<!-- Gradient Overlay for subtle depth -->
+<div class="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent"></div>
+<!-- Floating Overlay Card -->
+<div class="absolute -bottom-6 -left-6 lg:bottom-8 lg:-left-12 z-20 bg-surface/95 backdrop-blur-xl p-5 rounded-2xl shadow-[0_4px_20px_rgba(22,60,49,0.08)] flex items-center gap-4 transition-transform duration-500 hover:-translate-y-2">
+<div class="w-12 h-12 rounded-full bg-secondary-fixed/20 flex items-center justify-center shrink-0">
+<span class="material-symbols-outlined text-primary-container text-[24px]">verified</span>
+</div>
+<div class="flex flex-col">
+<span class="font-body-sm text-body-sm text-primary font-bold">Verified Authentic</span>
+<div class="bg-surface-container-highest rounded px-2 py-1 mt-1 inline-block w-max">
+<span class="font-code-md text-[12px] leading-[16px] text-on-surface-variant tracking-wider">Batch ID: VM-882-QX</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Divider: Blister Motif -->
+<div aria-hidden="true" class="w-full flex items-center justify-center py-8 overflow-hidden opacity-30">
+<div class="flex items-center gap-[4px]">
+<script>
+        for(let i=0; i<30; i++) {
+          document.write('<div class="w-[8px] h-[8px] rounded-full bg-outline"></div>');
+        }
+      </script>
+</div>
+</div>
+<!-- Trust Band -->
+<section class="w-full bg-surface-container-low py-16 px-margin-mobile lg:px-margin-desktop shadow-sm z-10 relative">
+<div class="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 divide-y md:divide-y-0 divide-outline-variant/20">
+<div class="flex flex-col items-center justify-center text-center pt-8 md:pt-0">
+<span class="font-headline-xl text-headline-xl text-primary mb-2">4.2M+</span>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest">Scans Performed</span>
+</div>
+<div class="flex flex-col items-center justify-center text-center pt-8 md:pt-0">
+<span class="font-headline-xl text-headline-xl text-primary mb-2">1,200+</span>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest">Registered Pharmacies</span>
+</div>
+<div class="flex flex-col items-center justify-center text-center pt-8 md:pt-0">
+<span class="font-headline-xl text-headline-xl text-primary mb-2">840</span>
+<span class="font-label-caps text-label-caps text-outline uppercase tracking-widest">Diversions Prevented</span>
+</div>
+</div>
+</section>
+<!-- How It Works Section -->
+<section class="w-full py-24 px-margin-mobile lg:px-margin-desktop bg-surface relative overflow-hidden" id="how-it-works">
+<!-- Decorative background element -->
+<div class="absolute top-0 right-0 w-[600px] h-[600px] bg-primary-fixed/30 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+<div class="max-w-[1200px] mx-auto relative z-10">
+<div class="flex flex-col items-center mb-20 text-center">
+<span class="font-label-caps text-label-caps text-primary-container mb-4">Process</span>
+<h2 class="font-headline-lg text-headline-lg text-primary max-w-2xl">
+          Verification made simple.
+        </h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+<!-- Step 1 -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-sm flex flex-col items-start relative overflow-hidden group hover:shadow-md transition-shadow duration-300">
+<div class="w-16 h-16 rounded-2xl bg-surface-container flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-primary text-[32px]">qr_code_scanner</span>
+</div>
+<span class="absolute top-4 right-6 font-headline-xl text-[120px] leading-none text-surface-container-high opacity-50 font-bold -z-10">1</span>
+<h3 class="font-headline-lg text-headline-lg-mobile text-primary mb-4">Scan the strip</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Use your device's camera to seamlessly scan the secure matrix code printed on the medicine blister pack.
+          </p>
+</div>
+<!-- Step 2 -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-sm flex flex-col items-start relative overflow-hidden group hover:shadow-md transition-shadow duration-300 md:-translate-y-6">
+<div class="w-16 h-16 rounded-2xl bg-primary-container flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300 shadow-[0_8px_24px_rgba(22,60,49,0.15)]">
+<span class="material-symbols-outlined text-on-primary text-[32px]">science</span>
+</div>
+<span class="absolute top-4 right-6 font-headline-xl text-[120px] leading-none text-surface-container-high opacity-50 font-bold -z-10">2</span>
+<h3 class="font-headline-lg text-headline-lg-mobile text-primary mb-4">Get instant info</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            View immutable authenticity records, origin source data, and clinical dosage information in real-time.
+          </p>
+</div>
+<!-- Step 3 -->
+<div class="bg-surface-container-lowest rounded-3xl p-8 shadow-sm flex flex-col items-start relative overflow-hidden group hover:shadow-md transition-shadow duration-300">
+<div class="w-16 h-16 rounded-2xl bg-secondary-fixed flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-300">
+<span class="material-symbols-outlined text-on-secondary-fixed text-[32px]">local_pharmacy</span>
+</div>
+<span class="absolute top-4 right-6 font-headline-xl text-[120px] leading-none text-surface-container-high opacity-50 font-bold -z-10">3</span>
+<h3 class="font-headline-lg text-headline-lg-mobile text-primary mb-4">Confirm purchase</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+            Shop with absolute confidence knowing your medical products are genuine and supply-chain verified.
+          </p>
+</div>
+</div>
+</div>
+</section>
+</div></main><footer class="w-full bg-surface-container-low mt-20 border-t border-outline-variant/20"><div class="max-w-[1200px] mx-auto px-margin-mobile lg:px-margin-desktop py-12"><div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12"><div class="flex flex-col gap-4"><div class="flex items-center gap-3"><img alt="VeriMed Logo" class="h-6 w-auto opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA7jU9vNuhuKSelWe65Jwz95Wseevq9CuP0_DigvHHgQXugosyy9rBuSdgLnHWBlAGRBgWLKnwI95NbvXZ8GQMQwLdhIkf5LiP648za5Ors1_9DNI1KM7loXklbj2ernUcnv4KZLyowiW58_PCsj7VrtR1tVLTzPJI01zaFA78vbCh9qyD8qnO6cWlp6RNDdbsBEZwKsTh2pU1_7XYfD-TSilbLSaGGBy8VaO2P7nMF7GPl3d9MP9rR"/> <span class="font-headline-lg text-headline-lg-mobile text-primary">VeriMed</span></div><p class="font-body-sm text-body-sm text-on-surface-variant max-w-xs">Securing the global pharmaceutical supply chain through verified medical integrity and clinical transparency.</p></div><div class="flex flex-col gap-4"><h4 class="font-label-caps text-label-caps text-on-surface uppercase">Resources</h4><nav class="flex flex-col gap-2"><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Documentation</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Supply Chain Standards</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Patient Safety</a></nav></div><div class="flex flex-col gap-4"><h4 class="font-label-caps text-label-caps text-on-surface uppercase">Legal</h4><nav class="flex flex-col gap-2"><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-primary transition-colors" href="#">Compliance</a></nav></div></div><div class="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-outline-variant/10"><span class="font-body-sm text-body-sm text-on-tertiary-fixed-variant">© 2024 VeriMed Integrity Systems. All rights reserved.</span><div class="flex gap-6 mt-4 md:mt-0"><span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">verified_user</span><span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">health_metrics</span><span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors">monitoring</span></div></div></div></footer></body></html>

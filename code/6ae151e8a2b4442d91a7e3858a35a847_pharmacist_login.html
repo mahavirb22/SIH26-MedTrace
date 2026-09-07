@@ -1,0 +1,121 @@
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"tertiary-container":"#2a3933","on-surface":"#1b1c1a","on-error":"#ffffff","on-tertiary-fixed":"#101e19","surface-dim":"#dbdad6","surface-container-low":"#f4f4f0","on-primary-fixed":"#002118","on-background":"#1b1c1a","on-error-container":"#93000a","tertiary-fixed":"#d6e6dd","on-tertiary-fixed-variant":"#3b4a43","secondary-fixed":"#c8f248","inverse-on-surface":"#f2f1ed","on-secondary-fixed":"#161f00","outline":"#717975","background":"#faf9f5","surface-container-lowest":"#ffffff","primary":"#00261c","on-secondary-container":"#556d00","error-container":"#ffdad6","on-secondary-fixed-variant":"#3c4d00","error":"#ba1a1a","surface-container-high":"#e9e8e4","primary-fixed":"#c2ebdb","tertiary-fixed-dim":"#bacac1","primary-container":"#163c31","inverse-surface":"#2f312e","surface-bright":"#faf9f5","on-tertiary":"#ffffff","surface-container-highest":"#e3e2df","on-tertiary-container":"#92a29a","tertiary":"#15231e","on-secondary":"#ffffff","inverse-primary":"#a7cfc0","surface-variant":"#e3e2df","on-primary-container":"#80a798","surface-tint":"#406659","surface-container":"#efeeea","secondary-fixed-dim":"#add52b","surface":"#faf9f5","primary-fixed-dim":"#a7cfc0","on-surface-variant":"#414845","on-primary":"#ffffff","outline-variant":"#c1c8c4","secondary-container":"#c8f248","secondary":"#506600","on-primary-fixed-variant":"#284e42"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"base":"8px","gutter":"24px","max-width":"1200px","margin-mobile":"16px","margin-desktop":"64px"},"fontFamily":{"label-caps":["Hanken Grotesk"],"headline-lg":["Syne"],"body-sm":["Hanken Grotesk"],"headline-xl":["Syne"],"headline-lg-mobile":["Syne"],"code-md":["JetBrains Mono"],"body-md":["Hanken Grotesk"]},"fontSize":{"label-caps":["12px",{"lineHeight":"16px","letterSpacing":"0.08em","fontWeight":"700"}],"headline-lg":["32px",{"lineHeight":"40px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-sm":["14px",{"lineHeight":"20px","fontWeight":"400"}],"headline-xl":["48px",{"lineHeight":"56px","letterSpacing":"-0.02em","fontWeight":"700"}],"headline-lg-mobile":["24px",{"lineHeight":"32px","fontWeight":"600"}],"code-md":["14px",{"lineHeight":"20px","letterSpacing":"0.05em","fontWeight":"500"}],"body-md":["16px",{"lineHeight":"24px","fontWeight":"400"}]}}}}</script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@100..900&family=Syne:wght@100..900&display=swap" rel="stylesheet"/></head><body class="bg-surface font-body-md text-on-surface"><main class="w-full flex items-center justify-center min-h-screen"><div class="flex flex-col w-full h-full items-center justify-center py-20 px-4">
+<div class="w-full max-w-md bg-surface-container-lowest rounded-xl p-8 relative overflow-hidden shadow-[0px_4px_20px_rgba(22,60,49,0.05)] border border-outline/30">
+<!-- Decorative Blister Motif -->
+<div class="absolute top-0 left-0 w-full flex justify-center py-4 space-x-1 opacity-20 pointer-events-none">
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+<div class="w-2 h-2 rounded-full bg-outline"></div>
+</div>
+<!-- Header -->
+<div class="mt-8 mb-8 text-center flex flex-col items-center">
+<span class="material-symbols-outlined text-primary mb-4" style="font-size: 48px; font-variation-settings: 'FILL' 1;">
+            verified_user
+        </span>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">Pharmacist Portal</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Secure authentication required.</p>
+</div>
+<!-- Login Form -->
+<form class="space-y-6" id="loginForm">
+<!-- Store ID -->
+<div class="flex flex-col">
+<label class="font-label-caps text-label-caps text-on-surface mb-2 uppercase tracking-wider" for="storeId">Store ID</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">
+                    storefront
+                </span>
+<input class="w-full bg-surface py-3 pl-10 pr-4 rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-code-md text-code-md text-primary-container placeholder-outline" id="storeId" placeholder="e.g. PHARM-8492" required="" type="text"/>
+</div>
+</div>
+<!-- Password -->
+<div class="flex flex-col">
+<div class="flex justify-between items-center mb-2">
+<label class="font-label-caps text-label-caps text-on-surface uppercase tracking-wider" for="password">Password</label>
+<button class="text-sm font-body-sm text-surface-tint hover:text-primary transition-colors focus:outline-none" type="button">Forgot?</button>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">
+                    lock
+                </span>
+<input class="w-full bg-surface py-3 pl-10 pr-12 rounded-lg border border-outline-variant focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors font-code-md text-code-md text-primary-container placeholder-outline" id="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-3 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors focus:outline-none" id="togglePassword" type="button">
+<span class="material-symbols-outlined text-xl">visibility_off</span>
+</button>
+</div>
+</div>
+<!-- OR Divider -->
+<div class="flex items-center justify-center space-x-4 my-6">
+<div class="h-px bg-outline-variant flex-1"></div>
+<span class="font-label-caps text-label-caps text-outline uppercase">OR</span>
+<div class="h-px bg-outline-variant flex-1"></div>
+</div>
+<!-- OTP Option -->
+<div class="flex justify-center mb-6">
+<button class="flex items-center space-x-2 text-surface-tint hover:text-primary transition-colors font-body-sm text-body-sm font-medium focus:outline-none" type="button">
+<span class="material-symbols-outlined text-lg">sms</span>
+<span>Send One-Time Passcode</span>
+</button>
+</div>
+<!-- Submit Button -->
+<button class="w-full bg-primary hover:bg-primary/90 text-on-primary py-3 rounded-full font-label-caps text-label-caps uppercase tracking-wider transition-all shadow-[0_2px_10px_rgba(0,38,28,0.2)] active:scale-[0.98] flex items-center justify-center space-x-2" type="submit">
+<span>Authenticate</span>
+<span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</form>
+<!-- Footer Note -->
+<div class="mt-8 text-center border-t border-outline-variant/50 pt-4">
+<p class="font-body-sm text-body-sm text-on-surface-variant flex items-center justify-center space-x-1">
+<span class="material-symbols-outlined text-sm">security</span>
+<span>End-to-end encrypted session</span>
+</p>
+</div>
+</div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const passwordInput = document.getElementById('password');
+        const icon = togglePasswordBtn.querySelector('.material-symbols-outlined');
+
+        togglePasswordBtn.addEventListener('click', () => {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            
+            if(type === 'password') {
+                icon.textContent = 'visibility_off';
+            } else {
+                icon.textContent = 'visibility';
+            }
+        });
+        
+        // Simple mock login animation
+        const form = document.getElementById('loginForm');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const btn = form.querySelector('button[type="submit"]');
+            const originalContent = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">refresh</span><span>Verifying...</span>';
+            btn.classList.add('opacity-80', 'cursor-not-allowed');
+            btn.disabled = true;
+            
+            setTimeout(() => {
+                btn.innerHTML = '<span class="material-symbols-outlined">check_circle</span><span>Authenticated</span>';
+                btn.classList.replace('bg-primary', 'bg-secondary-fixed');
+                btn.classList.replace('text-on-primary', 'text-on-secondary-fixed');
+                
+                setTimeout(() => {
+                    // Reset for demo purposes
+                    btn.innerHTML = originalContent;
+                    btn.classList.replace('bg-secondary-fixed', 'bg-primary');
+                    btn.classList.replace('text-on-secondary-fixed', 'text-on-primary');
+                    btn.classList.remove('opacity-80', 'cursor-not-allowed');
+                    btn.disabled = false;
+                }, 2000);
+            }, 1500);
+        });
+    });
+</script></main></body></html>
