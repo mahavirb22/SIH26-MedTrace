@@ -5,6 +5,7 @@ import {
   sellStock,
   getInventory,
   getTransactions,
+  getBatchDetails,
 } from '../controllers/pharmacistController.js';
 import { authenticate, authorize } from '../middleware/auth.js';
 
@@ -18,5 +19,6 @@ router.post('/receive', receiveStock);
 router.post('/sell', sellStock);
 router.get('/inventory', getInventory);
 router.get('/transactions', getTransactions);
+router.get('/batch/:batchId', getBatchDetails);
 
 export default router;

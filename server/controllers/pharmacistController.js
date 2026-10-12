@@ -20,7 +20,6 @@ export async function getDashboard(req, res, next) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Today's sell events for this store
     const todaySales = await LedgerEntry.find({
       'actor.storeId': user.storeId,
       event: 'SOLD',
@@ -33,17 +32,15 @@ export async function getDashboard(req, res, next) {
       timestamp: { $gte: today },
     }).lean();
 
-    // Inventory: all batches currently held by this store
     const inventory = await Batch.find({
       'currentHolder.storeId': user.storeId,
       remainingUnits: { $gt: 0 },
     })
-      .select('batchId product remainingUnits totalUnits expiryDate status')
+      .select('batchId product remainingUnits totalUnits expiryDate status microCodes')
       .lean();
 
     const lowStockCount = inventory.filter((b) => b.remainingUnits < 20).length;
 
-    // Flagged anomalies for this store
     const { default: Anomaly } = await import('../models/Anomaly.js');
     const activeAnomalies = await Anomaly.countDocuments({
       storeId: user.storeId,
@@ -66,14 +63,31 @@ export async function getDashboard(req, res, next) {
 }
 
 /**
+ * GET /api/pharmacist/batch/:batchId
+ * Fetch full Digital Twin Batch metadata including micro-codes for blister visualization.
+ */
+export async function getBatchDetails(req, res, next) {
+  try {
+    const { batchId } = req.params;
+    const batch = await Batch.findOne({ batchId: batchId.toUpperCase() }).lean();
+    if (!batch) {
+      return res.status(404).json({ error: `Batch ${batchId} not found.` });
+    }
+    res.json({ batch });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/**
  * POST /api/pharmacist/receive
- * Receive stock — one-way custody lock validation.
+ * Receive stock — Master QR Code scan. One-way custody lock validation.
  */
 export async function receiveStock(req, res, next) {
   try {
     const { batchId, quantity } = req.body;
     if (!batchId) {
-      return res.status(400).json({ error: 'Batch ID is required.' });
+      return res.status(400).json({ error: 'Master Pack ID is required.' });
     }
 
     const user = await User.findById(req.userId).lean();
@@ -83,21 +97,19 @@ export async function receiveStock(req, res, next) {
 
     const batch = await Batch.findOne({ batchId: batchId.toUpperCase() });
     if (!batch) {
-      return res.status(404).json({ error: `Batch ${batchId} not found.` });
+      return res.status(404).json({ error: `Master Pack ${batchId} not found in global manufacturer database.` });
     }
 
-    // ONE-WAY CUSTODY LOCK: If batch already has a holder (different store), reject
     if (
       batch.currentHolder?.storeId &&
       batch.currentHolder.storeId.toString() !== user.storeId.toString()
     ) {
       return res.status(403).json({
-        error: 'One-way custody lock violation. This batch is already held by another store.',
+        error: 'One-way custody lock violation. This Master Pack is already held by another dispensary.',
         currentHolder: batch.currentHolder.storeLicenseId,
       });
     }
 
-    // Update batch custody
     const store = await Store.findById(user.storeId).lean();
     batch.currentHolder = {
       storeId: user.storeId,
@@ -106,7 +118,6 @@ export async function receiveStock(req, res, next) {
     };
     await batch.save();
 
-    // Append RECEIVED event to ledger
     const entry = await appendToChain({
       batchId: batch.batchId,
       event: 'RECEIVED',
@@ -124,12 +135,13 @@ export async function receiveStock(req, res, next) {
     });
 
     res.json({
-      message: `Batch ${batch.batchId} received successfully.`,
+      message: `Master Pack ${batch.batchId} received successfully. Digital Twin initialized.`,
       batch: {
         batchId: batch.batchId,
         product: batch.product,
         remainingUnits: batch.remainingUnits,
         totalUnits: batch.totalUnits,
+        microCodes: batch.microCodes,
       },
       ledgerEntry: {
         sequenceNumber: entry.sequenceNumber,
@@ -143,13 +155,15 @@ export async function receiveStock(req, res, next) {
 
 /**
  * POST /api/pharmacist/sell
- * Sell/dispense — decrement digital twin, create ledger entry.
+ * Sell/dispense — Digital Twin blister cavity cut validation.
  */
 export async function sellStock(req, res, next) {
   try {
-    const { batchId, quantity } = req.body;
-    if (!batchId || !quantity || quantity < 1) {
-      return res.status(400).json({ error: 'Batch ID and quantity (>=1) are required.' });
+    const { batchId, quantity, stripIndex, targetCode } = req.body;
+    const qtyToSell = parseInt(quantity, 10) || 1;
+
+    if (!batchId || qtyToSell < 1) {
+      return res.status(400).json({ error: 'Master Pack ID and valid quantity (>=1) are required.' });
     }
 
     const user = await User.findById(req.userId).lean();
@@ -162,26 +176,22 @@ export async function sellStock(req, res, next) {
       return res.status(404).json({ error: `Batch ${batchId} not found.` });
     }
 
-    // Verify this store holds custody
     if (!batch.currentHolder?.storeId || batch.currentHolder.storeId.toString() !== user.storeId.toString()) {
       return res.status(403).json({ error: 'This batch is not in your store\'s custody.' });
     }
 
-    // Check sufficient stock
-    if (batch.remainingUnits < quantity) {
+    if (batch.remainingUnits < qtyToSell) {
       return res.status(400).json({
-        error: `Insufficient stock. Available: ${batch.remainingUnits}, Requested: ${quantity}`,
+        error: `Insufficient stock in pack. Available intact tablets: ${batch.remainingUnits}, Requested: ${qtyToSell}`,
       });
     }
 
-    // Run anomaly checks before allowing the sale
     const anomalies = await runAnomalyChecks({
       batchId: batch.batchId,
       batch,
       storeId: user.storeId,
     });
 
-    // Check for expired dispense (block it)
     const expiredAnomaly = anomalies.find((a) => a.type === 'EXPIRED_DISPENSE');
     if (expiredAnomaly) {
       return res.status(403).json({
@@ -190,23 +200,69 @@ export async function sellStock(req, res, next) {
       });
     }
 
-    // Decrement stock
-    batch.remainingUnits -= quantity;
+    // Validation for specific blister strip cuts
+    let targetStartIndex = 0;
+    let targetEndIndex = batch.microCodes.length - 1;
 
-    // Mark micro-codes as dispensed
-    let dispensedCodes = [];
-    let dispensedCount = 0;
-    for (const mc of batch.microCodes) {
-      if (!mc.isDispensed && dispensedCount < quantity) {
-        mc.isDispensed = true;
-        dispensedCodes.push(mc.code);
-        dispensedCount++;
+    if (stripIndex !== undefined && stripIndex !== null && stripIndex >= 0) {
+      targetStartIndex = stripIndex * 10;
+      targetEndIndex = targetStartIndex + 9;
+
+      const stripMicroCodes = batch.microCodes.filter(
+        (mc) => mc.index >= targetStartIndex && mc.index <= targetEndIndex
+      );
+
+      const intactOnStrip = stripMicroCodes.filter((mc) => !mc.isDispensed).length;
+
+      if (intactOnStrip < qtyToSell) {
+        return res.status(400).json({
+          error: `Cannot dispense ${qtyToSell} tablet(s) from Blister Strip #${stripIndex + 1}. Only ${intactOnStrip} intact tablet(s) remain on this strip.`,
+          availableOnStrip: intactOnStrip,
+          requested: qtyToSell,
+        });
       }
     }
 
+    // If targetCode specified (single pill scan), find its index
+    if (targetCode) {
+      const foundMc = batch.microCodes.find((mc) => mc.code === targetCode.toUpperCase());
+      if (foundMc) {
+        const foundStrip = Math.floor(foundMc.index / 10);
+        targetStartIndex = foundStrip * 10;
+        targetEndIndex = targetStartIndex + 9;
+      }
+    }
+
+    // Mark quantity micro-codes as dispensed sequentially starting from target strip
+    let dispensedCodes = [];
+    let dispensedCount = 0;
+
+    // First pass: try within target strip range
+    for (const mc of batch.microCodes) {
+      if (mc.index >= targetStartIndex && mc.index <= targetEndIndex) {
+        if (!mc.isDispensed && dispensedCount < qtyToSell) {
+          mc.isDispensed = true;
+          dispensedCodes.push(mc.code);
+          dispensedCount++;
+        }
+      }
+    }
+
+    // Second pass: fallback if needed
+    if (dispensedCount < qtyToSell) {
+      for (const mc of batch.microCodes) {
+        if (!mc.isDispensed && dispensedCount < qtyToSell) {
+          mc.isDispensed = true;
+          dispensedCodes.push(mc.code);
+          dispensedCount++;
+        }
+      }
+    }
+
+    // Decrement stock count
+    batch.remainingUnits -= qtyToSell;
     await batch.save();
 
-    // Append SOLD event to ledger
     const store = await Store.findById(user.storeId).lean();
     const entry = await appendToChain({
       batchId: batch.batchId,
@@ -218,7 +274,7 @@ export async function sellStock(req, res, next) {
         name: store?.name || 'Unknown Store',
       },
       payload: {
-        quantityChanged: -quantity,
+        quantityChanged: -qtyToSell,
         remainingAfter: batch.remainingUnits,
         metadata: {
           dispensedMicroCodes: dispensedCodes,
@@ -228,12 +284,13 @@ export async function sellStock(req, res, next) {
     });
 
     res.json({
-      message: `${quantity} unit(s) of ${batch.product.name} dispensed successfully.`,
+      message: `${qtyToSell} tablet(s) dispensed successfully from Digital Twin.`,
       batch: {
         batchId: batch.batchId,
         product: batch.product,
         remainingUnits: batch.remainingUnits,
         totalUnits: batch.totalUnits,
+        microCodes: batch.microCodes,
       },
       dispensedMicroCodes: dispensedCodes,
       ledgerEntry: {
@@ -260,7 +317,7 @@ export async function getInventory(req, res, next) {
     const inventory = await Batch.find({
       'currentHolder.storeId': user.storeId,
     })
-      .select('batchId product totalUnits remainingUnits mfgDate expiryDate status currentHolder')
+      .select('batchId product totalUnits remainingUnits mfgDate expiryDate status currentHolder microCodes')
       .sort({ 'currentHolder.receivedAt': -1 })
       .lean();
 

@@ -5,6 +5,7 @@ import Button from '../../components/Button';
 import BlisterDivider from '../../components/BlisterDivider';
 import Card from '../../components/Card';
 import BatchBadge from '../../components/BatchBadge';
+import NearbyPharmacyFinder from '../../components/NearbyPharmacyFinder';
 import pharmacistPhoto from '../../assets/743adaa0df674d85b7d6284b39affda9_pharmacist_photo.png';
 
 export default function PatientLanding() {
@@ -82,6 +83,9 @@ export default function PatientLanding() {
 
           {/* Blister Motif Spatial Divider */}
           <BlisterDivider count={24} />
+
+          {/* Nearby Pharmacy Inventory & Price Finder Feature Section */}
+          <NearbyPharmacyFinder />
 
           {/* Trust Metrics Band */}
           <section className="w-full bg-surface-container-low py-16 px-4 sm:px-8 shadow-sm z-10 relative border-y border-outline-variant/20">

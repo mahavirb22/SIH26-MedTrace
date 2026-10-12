@@ -7,6 +7,7 @@ import Card from '../../components/Card';
 import StatusBadge from '../../components/StatusBadge';
 import BatchBadge from '../../components/BatchBadge';
 import FormInput from '../../components/FormInput';
+import PillReminderModal from '../../components/PillReminderModal';
 
 export default function ScanHistory() {
   const { isAuthenticated, authFetch } = useAuth();
@@ -14,51 +15,87 @@ export default function ScanHistory() {
   const [filterTab, setFilterTab] = useState('all');
   const [historyItems, setHistoryItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [alarmModalItem, setAlarmModalItem] = useState(null);
+  const [alarms, setAlarms] = useState(() => {
+    try {
+      const stored = localStorage.getItem('medtrace_pill_alarms');
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     async function fetchHistory() {
-      setLoading(true);
       if (!isAuthenticated) {
-        // Show demo data if not logged in
-        setHistoryItems(getDemoData());
+        setHistoryItems([]);
         setLoading(false);
         return;
       }
+      setLoading(true);
       try {
         const res = await authFetch('/api/patient/history');
         const data = await res.json();
         if (res.ok && data.history) {
-          setHistoryItems(data.history.map((scan) => ({
-            id: scan.batchId,
-            name: scan.product?.name || 'Unknown Medicine',
-            dosage: scan.product?.dosageForm || '',
-            date: new Date(scan.verifiedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
-            pharmacy: scan.currentHolder?.storeLicenseId || 'Unknown',
-            status: scan.result === 'warning' ? 'warning' : scan.result === 'counterfeit' ? 'error' : 'verified',
-          })));
+          const uniqueScans = [];
+          data.history.forEach((scan) => {
+            const scanTime = new Date(scan.verifiedAt).getTime();
+            const isDuplicate = uniqueScans.some(
+              (prev) => prev.batchId === scan.batchId && Math.abs(new Date(prev.verifiedAt).getTime() - scanTime) < 60000
+            );
+            if (!isDuplicate) {
+              uniqueScans.push(scan);
+            }
+          });
+
+          setHistoryItems(
+            uniqueScans.map((scan) => ({
+              scanId: scan._id || scan.batchId + scan.verifiedAt,
+              id: scan.batchId,
+              name: scan.product?.name || 'Verified Medication',
+              dosage: scan.product?.dosageForm ? `${scan.product.dosageForm} ${scan.product.strength ? `(${scan.product.strength})` : ''}` : 'Verified Batch',
+              date: new Date(scan.verifiedAt).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+              }),
+              pharmacy: scan.currentHolder?.storeLicenseId || 'Registered Dispensary',
+              status: scan.result === 'warning' ? 'warning' : scan.result === 'counterfeit' ? 'error' : 'verified',
+            }))
+          );
         } else {
-          setHistoryItems(getDemoData());
+          setHistoryItems([]);
         }
       } catch {
-        setHistoryItems(getDemoData());
+        setHistoryItems([]);
       } finally {
         setLoading(false);
       }
     }
     fetchHistory();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, authFetch]);
 
-  function getDemoData() {
-    return [
-      { id: 'BH-992-QX', name: 'Amoxicillin 500mg', dosage: 'Oral Capsules', date: 'Today, 2:45 PM', pharmacy: 'PHARM-8492', status: 'verified' },
-      { id: 'LP-334-MX', name: 'Lipitor (Atorvastatin) 20mg', dosage: 'Film-Coated Tablets', date: 'Yesterday, 11:30 AM', pharmacy: 'PHARM-3310', status: 'verified' },
-      { id: 'CR-882-FL', name: 'Crestor (Rosuvastatin) 10mg', dosage: 'Flagged - QR checksum discrepancy', date: 'Aug 24, 2026', pharmacy: 'Unverified Outpost', status: 'warning' },
-      { id: 'PB-104-ZT', name: 'Paracetamol 650mg', dosage: 'Tablets', date: 'Aug 20, 2026', pharmacy: 'PHARM-1102', status: 'verified' },
-    ];
-  }
+  const handleSaveAlarm = (alarmData) => {
+    const updated = { ...alarms, [alarmData.medicineId]: alarmData };
+    setAlarms(updated);
+    localStorage.setItem('medtrace_pill_alarms', JSON.stringify(updated));
+    setAlarmModalItem(null);
+  };
+
+  const handleRemoveAlarm = (medicineId) => {
+    const updated = { ...alarms };
+    delete updated[medicineId];
+    setAlarms(updated);
+    localStorage.setItem('medtrace_pill_alarms', JSON.stringify(updated));
+    setAlarmModalItem(null);
+  };
 
   const filteredItems = historyItems.filter((item) => {
-    const matchesQuery = item.name.toLowerCase().includes(searchQuery.toLowerCase()) || item.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesQuery =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.id.toLowerCase().includes(searchQuery.toLowerCase());
     if (filterTab === 'verified') return matchesQuery && item.status === 'verified';
     if (filterTab === 'warning') return matchesQuery && (item.status === 'warning' || item.status === 'error');
     return matchesQuery;
@@ -69,11 +106,12 @@ export default function ScanHistory() {
       <Navbar />
 
       <main className="flex-1 w-full max-w-content mx-auto pt-24 pb-16 px-4 sm:px-8 flex flex-col gap-8">
+        {/* Top Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/20 pb-6">
           <div>
             <h1 className="font-headline text-3xl font-bold text-primary">My Medicines & Scan History</h1>
             <p className="font-body text-sm text-on-surface-variant mt-1">
-              {isAuthenticated ? 'Personal ledger of all scanned and verified pharmaceuticals.' : 'Sign in to persist your scan history across devices.'}
+              Personal ledger of your verified pharmaceuticals and medication dose reminders.
             </p>
           </div>
           <Link to="/patient/scan">
@@ -83,83 +121,140 @@ export default function ScanHistory() {
           </Link>
         </div>
 
-        {!isAuthenticated && (
-          <div className="bg-primary-fixed/30 text-primary border border-primary-fixed/50 rounded-lg px-4 py-3 text-sm font-body flex items-center gap-3">
-            <span className="material-symbols-outlined">info</span>
-            <span>Showing demo data. <Link to="/patient/login" className="underline font-bold">Sign in</Link> to see your real scan history.</span>
-          </div>
-        )}
-
-        {/* Filter Controls */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20">
-          <div className="w-full md:w-80">
-            <FormInput
-              placeholder="Search by medicine name or batch ID..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              icon={<span className="material-symbols-outlined">search</span>}
-            />
-          </div>
-          <div className="flex bg-surface-container rounded-xl p-1 gap-1 w-full md:w-auto">
-            {['all', 'verified', 'warning'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setFilterTab(tab)}
-                className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-label-caps uppercase tracking-wider font-bold transition-all ${
-                  filterTab === tab ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
-                }`}
-              >
-                {tab === 'all' ? 'All Scans' : tab === 'verified' ? 'Verified Only' : 'Flagged / Warnings'}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Loading State */}
-        {loading ? (
-          <div className="flex justify-center py-16">
-            <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-          </div>
+        {/* 1. NOT AUTHENTICATED STATE — REQUIRE SIGN IN (NO DEMO DATA) */}
+        {!isAuthenticated ? (
+          <Card variant="elevated" rounded="xl" className="p-10 text-center flex flex-col items-center gap-5 shadow-level-2 max-w-xl mx-auto border border-outline-variant/30 my-8">
+            <div className="w-16 h-16 rounded-full bg-primary-container text-on-primary flex items-center justify-center shadow-sm">
+              <span className="material-symbols-outlined text-3xl">lock_person</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <h2 className="font-headline text-2xl font-bold text-primary">Sign In Required</h2>
+              <p className="font-body text-xs text-on-surface-variant leading-relaxed max-w-md">
+                Please sign in or create an account to view your verified medicine scan history and schedule dose alarms.
+              </p>
+            </div>
+            <Link to="/patient/login" className="mt-2">
+              <Button variant="primary" size="lg" icon={<span className="material-symbols-outlined">login</span>}>
+                Sign In / Create Account
+              </Button>
+            </Link>
+          </Card>
         ) : (
-          <div className="flex flex-col gap-4">
-            {filteredItems.length > 0 ? (
-              filteredItems.map((item) => (
-                <Card key={item.id + item.date} variant="outlined" rounded="xl" className="p-6 hover:shadow-level-2 transition-all">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-primary-container/10 text-primary flex items-center justify-center shrink-0">
-                        <span className="material-symbols-outlined text-2xl">medication</span>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <div className="flex items-center gap-3 flex-wrap">
-                          <h3 className="font-headline text-lg font-bold text-primary">{item.name}</h3>
-                          <StatusBadge status={item.status} />
-                        </div>
-                        <p className="font-body text-xs text-on-surface-variant">{item.dosage}</p>
-                        <div className="flex items-center gap-4 mt-2 text-[11px] text-outline flex-wrap">
-                          <span>Dispensary: <strong>{item.pharmacy}</strong></span>
-                          <span>•</span>
-                          <span>Scanned: {item.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
-                      <BatchBadge id={item.id} />
-                      <Link to={`/verify/${item.id}`}>
-                        <Button variant="outline" size="sm">Details</Button>
-                      </Link>
-                    </div>
-                  </div>
-                </Card>
-              ))
+          /* 2. AUTHENTICATED STATE — SHOW REAL USER SCAN HISTORY WITH DOSE ALARMS */
+          <>
+            {/* Filter Controls */}
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface-container-low p-4 rounded-2xl border border-outline-variant/20">
+              <div className="w-full md:w-80">
+                <FormInput
+                  placeholder="Search by medicine name or batch ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  icon={<span className="material-symbols-outlined">search</span>}
+                />
+              </div>
+              <div className="flex bg-surface-container rounded-xl p-1 gap-1 w-full md:w-auto">
+                {['all', 'verified', 'warning'].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setFilterTab(tab)}
+                    className={`flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-label-caps uppercase tracking-wider font-bold transition-all ${
+                      filterTab === tab ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+                    }`}
+                  >
+                    {tab === 'all' ? 'All Scans' : tab === 'verified' ? 'Verified Only' : 'Flagged / Warnings'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Loading State */}
+            {loading ? (
+              <div className="flex justify-center py-16">
+                <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+              </div>
             ) : (
-              <Card variant="flat" rounded="xl" className="p-12 text-center text-outline">
-                <p className="font-body text-sm">No medicine scans match your search query.</p>
-              </Card>
+              <div className="flex flex-col gap-4">
+                {filteredItems.length > 0 ? (
+                  filteredItems.map((item) => {
+                    const activeAlarm = alarms[item.id];
+                    return (
+                      <Card key={item.scanId || (item.id + item.date)} variant="outlined" rounded="xl" className="p-6 hover:shadow-level-2 transition-all">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-primary-container/10 text-primary flex items-center justify-center shrink-0">
+                              <span className="material-symbols-outlined text-2xl">medication</span>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="font-headline text-lg font-bold text-primary">{item.name}</h3>
+                                <StatusBadge status={item.status} />
+
+                                {/* Pill Reminder Alarm Badge / Trigger */}
+                                {activeAlarm ? (
+                                  <button
+                                    onClick={() => setAlarmModalItem(item)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-secondary-container/30 text-primary border border-secondary-container/50 rounded-full text-xs font-bold transition-all hover:bg-secondary-container/50"
+                                    title="Click to edit or remove dose alarm"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">notifications_active</span>
+                                    <span>Alarm Active: {activeAlarm.times.join(', ')} ({activeAlarm.instruction})</span>
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => setAlarmModalItem(item)}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container hover:bg-surface-container-high text-outline hover:text-primary rounded-full text-xs font-semibold border border-outline-variant/30 transition-all"
+                                  >
+                                    <span className="material-symbols-outlined text-sm">alarm_add</span>
+                                    <span>Set Dose Alarm</span>
+                                  </button>
+                                )}
+                              </div>
+                              <p className="font-body text-xs text-on-surface-variant">{item.dosage}</p>
+                              <div className="flex items-center gap-4 mt-2 text-[11px] text-outline flex-wrap">
+                                <span>Dispensary: <strong>{item.pharmacy}</strong></span>
+                                <span>•</span>
+                                <span>Scanned: {item.date}</span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                            <BatchBadge id={item.id} />
+                            <Link to={`/verify/${item.id}`}>
+                              <Button variant="outline" size="sm">Details</Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })
+                ) : (
+                  <Card variant="flat" rounded="xl" className="p-12 text-center text-outline flex flex-col items-center gap-4">
+                    <span className="material-symbols-outlined text-4xl text-outline">inventory</span>
+                    <p className="font-body text-sm font-medium">
+                      {searchQuery ? 'No medicine scans match your search query.' : 'Your medicine history is currently empty.'}
+                    </p>
+                    <Link to="/patient/scan">
+                      <Button variant="secondary" size="md">
+                        Scan a Medicine Now
+                      </Button>
+                    </Link>
+                  </Card>
+                )}
+              </div>
             )}
-          </div>
+          </>
         )}
       </main>
+
+      {/* Pill Reminder & Dose Alarm Modal */}
+      <PillReminderModal
+        isOpen={!!alarmModalItem}
+        medicine={alarmModalItem}
+        existingAlarm={alarmModalItem ? alarms[alarmModalItem.id] : null}
+        onClose={() => setAlarmModalItem(null)}
+        onSave={handleSaveAlarm}
+        onRemove={handleRemoveAlarm}
+      />
     </div>
   );
 }

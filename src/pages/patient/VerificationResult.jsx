@@ -10,7 +10,7 @@ import BlisterDivider from '../../components/BlisterDivider';
 
 export default function VerificationResult() {
   const { code } = useParams();
-  const { authFetch } = useAuth();
+  const { isAuthenticated, authFetch } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [verifyData, setVerifyData] = useState(null);
@@ -21,30 +21,39 @@ export default function VerificationResult() {
 
   const verifyCode = code || 'BH-992-QX';
 
-  // Fetch verification data from API
+  const hasRecordedScan = useRef(false);
+
+  // Fetch verification data from API & submit scan event
   useEffect(() => {
+    let isMounted = true;
+
     async function fetchVerification() {
       setLoading(true);
       setError('');
       try {
-        // Submit verification (creates scan record + ledger entry)
+        // Fetch public verification info
         const res = await fetch(`/api/verify/${encodeURIComponent(verifyCode)}`);
         const data = await res.json();
+        if (!isMounted) return;
+
         if (!res.ok) {
           setError(data.error || 'Verification failed');
           setVerifyData({ verified: false, result: 'counterfeit' });
         } else {
           setVerifyData(data);
-          // Also submit the verification event
-          fetch('/api/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: verifyCode }),
-          }).catch(() => {}); // fire and forget
+          // Guard: Submit scan event ONLY ONCE per code verification
+          if (!hasRecordedScan.current) {
+            hasRecordedScan.current = true;
+            authFetch('/api/verify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: verifyCode }),
+            }).catch(() => {}); // fire and forget
+          }
         }
       } catch (err) {
+        if (!isMounted) return;
         setError('Network error — is the backend running?');
-        // Fall back to hardcoded data for demo if backend is down
         setVerifyData({
           verified: true,
           result: 'verified',
@@ -57,10 +66,15 @@ export default function VerificationResult() {
           custodyChain: [],
         });
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
+
     fetchVerification();
+
+    return () => {
+      isMounted = false;
+    };
   }, [verifyCode]);
 
   // Initialize AI chat greeting once data loads
@@ -121,7 +135,6 @@ export default function VerificationResult() {
   // Derive display values
   const batch = verifyData?.batch;
   const product = batch?.product || {};
-  const isVerified = verifyData?.verified;
   const resultStatus = verifyData?.result === 'counterfeit' ? 'error' : verifyData?.result === 'warning' ? 'warning' : 'verified';
   const statusLabel = resultStatus === 'error' ? 'Counterfeit / Not Found' : resultStatus === 'warning' ? 'Warning — Expired' : 'Verified Authentic';
   const custodyChain = verifyData?.custodyChain || [];
@@ -133,7 +146,7 @@ export default function VerificationResult() {
         <main className="flex-1 flex items-center justify-center pt-24">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
-            <p className="text-sm text-on-surface-variant">Verifying {verifyCode}...</p>
+            <p className="text-sm text-on-surface-variant">Verifying code {verifyCode}...</p>
           </div>
         </main>
       </div>
@@ -154,13 +167,13 @@ export default function VerificationResult() {
             <h1 className="font-headline text-2xl font-bold text-primary">Scan Verification Result</h1>
           </div>
           <Link to="/patient/history">
-            <Button variant="secondary" size="md">View My Medicines</Button>
+            <Button variant="secondary" size="md">View My History</Button>
           </Link>
         </div>
 
         {error && (
           <div className="bg-amber-500/10 text-amber-800 border border-amber-500/30 rounded-lg px-4 py-2 text-sm font-body">
-            ⚠️ {error} — Showing cached/demo data.
+            ⚠️ {error} — Showing offline cached ledger data.
           </div>
         )}
 
@@ -180,7 +193,7 @@ export default function VerificationResult() {
 
               <StatusBadge status={resultStatus} label={statusLabel} className="mb-2 px-4 py-1 text-sm" />
               <p className="text-body text-sm text-outline mb-6">
-                {resultStatus === 'error' ? 'This code was not found in the MedTrace ledger.' : 'Chain of custody & manufacturer hash confirmed in ledger.'}
+                {resultStatus === 'error' ? 'This code was not found in the MedTrace ledger.' : 'Chain of custody & HMAC micro-code signature confirmed in ledger.'}
               </p>
 
               {/* Medicine Product Specs */}
@@ -235,11 +248,19 @@ export default function VerificationResult() {
 
               {/* CTAs */}
               <div className="w-full mt-6 flex flex-col sm:flex-row gap-3">
-                <Link to="/patient/history" className="w-full">
-                  <Button variant="primary" size="md" fullWidth icon={<span className="material-symbols-outlined">bookmark_add</span>}>
-                    Save to My Medicines
-                  </Button>
-                </Link>
+                {isAuthenticated ? (
+                  <Link to="/patient/history" className="w-full">
+                    <Button variant="primary" size="md" fullWidth icon={<span className="material-symbols-outlined">bookmark_add</span>}>
+                      View My Medicine History
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link to="/patient/login" className="w-full">
+                    <Button variant="primary" size="md" fullWidth icon={<span className="material-symbols-outlined">login</span>}>
+                      Sign In to Save to History
+                    </Button>
+                  </Link>
+                )}
                 <Link to="/patient/scan" className="w-full">
                   <Button variant="outline" size="md" fullWidth>
                     Scan Another Medicine

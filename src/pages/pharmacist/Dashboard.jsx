@@ -6,6 +6,7 @@ import Button from '../../components/Button';
 import Card from '../../components/Card';
 import StatusBadge from '../../components/StatusBadge';
 import BatchBadge from '../../components/BatchBadge';
+import PharmacistMasterScannerModal from '../../components/PharmacistMasterScannerModal';
 
 export default function Dashboard() {
   const { authFetch } = useAuth();
@@ -13,39 +14,41 @@ export default function Dashboard() {
   const [store, setStore] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [masterScannerOpen, setMasterScannerOpen] = useState(false);
+
+  const fetchDashboard = async () => {
+    setLoading(true);
+    try {
+      const [dashRes, txRes] = await Promise.all([
+        authFetch('/api/pharmacist/dashboard'),
+        authFetch('/api/pharmacist/transactions'),
+      ]);
+      const dashData = await dashRes.json();
+      const txData = await txRes.json();
+
+      if (dashRes.ok) {
+        setMetrics(dashData.metrics || {});
+        setStore(dashData.store || null);
+      }
+      if (txRes.ok) {
+        setTransactions(txData.transactions || []);
+      }
+    } catch {
+      // Keep defaults on error
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchDashboard() {
-      setLoading(true);
-      try {
-        const [dashRes, txRes] = await Promise.all([
-          authFetch('/api/pharmacist/dashboard'),
-          authFetch('/api/pharmacist/transactions'),
-        ]);
-        const dashData = await dashRes.json();
-        const txData = await txRes.json();
-
-        if (dashRes.ok) {
-          setMetrics(dashData.metrics || {});
-          setStore(dashData.store || null);
-        }
-        if (txRes.ok) {
-          setTransactions(txData.transactions || []);
-        }
-      } catch {
-        // Keep defaults on error
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchDashboard();
   }, []);
 
   const metricCards = [
-    { label: "Today's Scans", value: String(metrics.todayScans || 0), icon: 'qr_code_scanner' },
+    { label: "Today's Ledger Activity", value: String(metrics.todayScans || 0), icon: 'qr_code_scanner' },
     { label: 'Verified Dispensed', value: String(metrics.todayDispensed || 0), icon: 'verified' },
     { label: 'Flagged Anomalies', value: String(metrics.flaggedAnomalies || 0), icon: 'warning' },
-    { label: 'Stock Items Low', value: String(metrics.lowStockItems || 0), icon: 'inventory_2' },
+    { label: 'Low Stock Items', value: String(metrics.lowStockItems || 0), icon: 'inventory_2' },
   ];
 
   return (
@@ -56,20 +59,28 @@ export default function Dashboard() {
         {/* Top Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-outline-variant/20 pb-6">
           <div>
-            <h1 className="font-headline text-3xl font-bold text-primary">Pharmacist Dashboard</h1>
+            <h1 className="font-headline text-3xl font-bold text-primary">Pharmacist POS Dashboard</h1>
             <p className="font-body text-sm text-on-surface-variant mt-1">
-              Dispensary status: <strong>{store ? `${store.name} (#${store.licenseId})` : 'Loading...'}</strong>
+              Dispensary: <strong>{store ? `${store.name} (#${store.licenseId})` : 'Loading...'}</strong>
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <Button
+              variant="primary"
+              size="md"
+              icon={<span className="material-symbols-outlined">qr_code_scanner</span>}
+              onClick={() => setMasterScannerOpen(true)}
+            >
+              Receive Stock (Scan Master Pack QR)
+            </Button>
             <Link to="/pharmacist/sell">
               <Button variant="secondary" size="md" icon={<span className="material-symbols-outlined">point_of_sale</span>}>
-                New Dispense
+                Dispense POS
               </Button>
             </Link>
             <Link to="/pharmacist/inventory">
-              <Button variant="outline" size="md" icon={<span className="material-symbols-outlined">add_box</span>}>
-                Update Inventory
+              <Button variant="outline" size="md" icon={<span className="material-symbols-outlined">inventory</span>}>
+                View Inventory
               </Button>
             </Link>
           </div>
@@ -104,7 +115,7 @@ export default function Dashboard() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-outline-variant/30 text-[11px] font-label-caps text-outline uppercase tracking-wider">
-                      <th className="pb-3 px-2">Batch ID</th>
+                      <th className="pb-3 px-2">Master Pack ID</th>
                       <th className="pb-3 px-2">Event</th>
                       <th className="pb-3 px-2">Quantity</th>
                       <th className="pb-3 px-2">Timestamp</th>
@@ -112,27 +123,29 @@ export default function Dashboard() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-outline-variant/15 text-sm font-body">
-                    {transactions.length > 0 ? transactions.map((tx, idx) => (
-                      <tr key={idx} className="hover:bg-surface-container-low transition-colors">
-                        <td className="py-4 px-2"><BatchBadge id={tx.batchId} /></td>
-                        <td className="py-4 px-2">
-                          <StatusBadge status={tx.event === 'SOLD' ? 'verified' : 'info'} label={tx.event} />
-                        </td>
-                        <td className="py-4 px-2 font-mono text-on-surface-variant">
-                          {Math.abs(tx.payload?.quantityChanged || 0)} units
-                        </td>
-                        <td className="py-4 px-2 text-xs text-outline">
-                          {new Date(tx.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
-                        </td>
-                        <td className="py-4 px-2 text-right">
-                          <Link to={`/admin/audit/${tx.batchId}`}>
-                            <Button variant="ghost" size="sm">Audit Trail</Button>
-                          </Link>
-                        </td>
-                      </tr>
-                    )) : (
+                    {transactions.length > 0 ? (
+                      transactions.map((tx, idx) => (
+                        <tr key={idx} className="hover:bg-surface-container-low transition-colors">
+                          <td className="py-4 px-2"><BatchBadge id={tx.batchId} /></td>
+                          <td className="py-4 px-2">
+                            <StatusBadge status={tx.event === 'SOLD' ? 'verified' : 'info'} label={tx.event === 'RECEIVED' ? 'RECEIVED (MASTER QR)' : tx.event} />
+                          </td>
+                          <td className="py-4 px-2 font-mono text-on-surface-variant">
+                            {Math.abs(tx.payload?.quantityChanged || 0)} units
+                          </td>
+                          <td className="py-4 px-2 text-xs text-outline">
+                            {new Date(tx.timestamp).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
+                          </td>
+                          <td className="py-4 px-2 text-right">
+                            <Link to={`/admin/audit/${tx.batchId}`}>
+                              <Button variant="ghost" size="sm">Audit Trail</Button>
+                            </Link>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
                       <tr>
-                        <td colSpan="5" className="py-8 text-center text-outline text-sm">No transactions yet today.</td>
+                        <td colSpan="5" className="py-8 text-center text-outline text-sm">No transactions recorded yet.</td>
                       </tr>
                     )}
                   </tbody>
@@ -142,6 +155,13 @@ export default function Dashboard() {
           </>
         )}
       </main>
+
+      {/* Master Pack QR Code Scanner Modal */}
+      <PharmacistMasterScannerModal
+        isOpen={masterScannerOpen}
+        onClose={() => setMasterScannerOpen(false)}
+        onSuccess={() => fetchDashboard()}
+      />
     </div>
   );
 }

@@ -113,6 +113,32 @@ export async function submitVerification(req, res, next) {
     const isExpired = new Date(batch.expiryDate) < new Date();
     const result = isExpired ? 'warning' : 'verified';
 
+    // Deduplicate: If user logged a scan for this batch within the last 15 seconds, reuse existing scan
+    if (req.userId) {
+      const fifteenSecsAgo = new Date(Date.now() - 15000);
+      const recentScan = await Scan.findOne({
+        userId: req.userId,
+        batchId: batch.batchId,
+        verifiedAt: { $gte: fifteenSecsAgo },
+      });
+
+      if (recentScan) {
+        return res.json({
+          verified: !isExpired,
+          result,
+          scanId: recentScan._id,
+          batch: {
+            batchId: batch.batchId,
+            product: batch.product,
+            mfgDate: batch.mfgDate,
+            expiryDate: batch.expiryDate,
+            status: batch.status,
+            currentHolder: batch.currentHolder,
+          },
+        });
+      }
+    }
+
     // Create scan record
     const scan = await Scan.create({
       userId: req.userId || null,

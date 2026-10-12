@@ -28,7 +28,7 @@ export default function PatientLogin() {
       } else {
         await login(email, password);
       }
-      navigate('/patient');
+      navigate('/patient/history');
     } catch (err) {
       setError(err.message || 'Authentication failed');
     } finally {
